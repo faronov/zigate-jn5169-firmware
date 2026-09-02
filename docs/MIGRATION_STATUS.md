@@ -12,18 +12,18 @@ OCB_KEY_EXPORT_RESTORE_EXPERIMENTAL=0
 
 Build entry point: `scripts/build.sh {clean|all}` (see header for overrides).
 
-**Publication-candidate status:** static/source invariants pass, two clean
-wrapper-default builds with the pinned BA2 toolchain are reproducible, and the
-exact rev17 BIN below has passed targeted JN5169 HIL for retained network/TX
+**Source/build-candidate status:** rev18 changes only the current TX-power PDM
+record ID and has not been hardware-qualified. The exact rev17 BIN below
+remains the targeted JN5169 HIL-qualified artifact for retained network/TX
 power and the RODRET reset defect. This does not qualify optional OCB restore
 or experimental key export. Older hashes and map figures are explicitly
-labelled historical evidence and must not be advertised as current builds.
+labelled historical evidence and must not be advertised as rev18 results.
 
 The current wrapper-default constants are diagnostic protocol 1.2, build
-revision 17, capability bitmap `0x00000000000CC60F`, and
-`DIAG_FW_BUILD_ID=0x010DC53D`. The default-off experimental key-export build
+revision 18, capability bitmap `0x00000000000CC60F`, and
+`DIAG_FW_BUILD_ID=0x010DC53E`. The default-off experimental key-export build
 adds bit 16, producing bitmap `0x00000000000DC60F` and build ID
-`0x010CC53D`. Reserved BackupCapable bit 17 remains clear in every build;
+`0x010CC53E`. Reserved BackupCapable bit 17 remains clear in every build;
 reset-summary capability bit 18 and reset-context capability bit 19 are set.
 
 Current added/changed UART surfaces are:
@@ -79,7 +79,8 @@ exact BIN onto a device carrying rev9's old eight-byte record at `0x0011`
 showed that SET 7 failed closed with status 1 and GET remained at default code
 8. The attempt to replace a differently sized record at the same ID therefore
 does not work with this EEPROM PDM implementation. Rev10 is not a valid
-persistence release.
+persistence release. The rev9/rev10 images and incompatible record were
+test-only and were never distributed in a product variant.
 
 Historical rev11 clean pinned-BA2 wrapper-default build:
 
@@ -113,7 +114,7 @@ proved TX power 7 survives both a full power cycle and a soft adapter restart.
 The same HIL exposed an unresolved software-reset storm during an IKEA RODRET
 Active Endpoints interview; watchdog and brownout flags remained clear.
 
-Current rev14 clean pinned-BA2 wrapper-default build:
+Historical rev14 clean pinned-BA2 wrapper-default build:
 
 ```
 text=256308  data=2104  bss=30437
@@ -152,7 +153,7 @@ new exact 22-byte `0x8D2C` response. Existing `0x8D2B` remains exactly six
 bytes. This is build evidence only; rev15 has not been flashed or
 HIL-qualified.
 
-Current rev16 clean pinned-BA2 wrapper-default build:
+Historical rev16 clean pinned-BA2 wrapper-default build:
 
 ```
 text=256780  data=2104  bss=30469
@@ -174,7 +175,7 @@ before rev16 HIL.
 Rev16 was subsequently flashed and used to localize the RODRET reset storm to
 a bus error at `bDuplicateCheck()+0x2c8` in the prebuilt v2395 ZPS APS library.
 
-Current rev17 clean pinned-BA2 wrapper-default build:
+HIL-qualified rev17 clean pinned-BA2 wrapper-default build:
 
 ```
 text=256808  data=2104  bss=30469
@@ -199,6 +200,27 @@ same hashes. The exact BIN was flashed on ZiGate v1 JN5169 and preserved PAN
 received `0x8002`, `0x8005` and `0x8004`, completed with one endpoint, and
 produced no new `0x8006` restart indication. The retained reset context stayed
 at the expected host-reset reason `0x10`.
+
+Rev18 changes the current packed TX-power v2 record ID to `0x0011` and removes
+the test-only reserved/replacement-ID workaround. One clean pinned-BA2
+wrapper-default build produced:
+
+```
+text=256808  data=2104  bss=30469
+_minimum_heap_end=0x040067cc
+_stack_low_water_mark=0x04006890
+linker RAM margin=196 bytes
+bin size=258920 bytes
+bin sha256 421893c636aded7204889e6b8bd85206312b1de0b0ed7b5507dbbd2d18d77d36
+elf sha256 6b9898ca40d5709623eafb92f015d0d5ffd8aaacf571989b7d059cbaeb35cad7
+DIAG_FW_BUILD_ID=0x010DC53E
+```
+
+The incompatible rev9/rev10 record was never distributed in a product
+variant, so rev18 implements no migration; affected test devices may be
+factory-reset. The packed record validation, save readback, restore ordering,
+UART protocol and capability bitmap are unchanged. This is one clean-build
+result, not a reproducibility or hardware-qualification claim.
 
 ## OCB firmware hardening and typed export status
 
@@ -742,13 +764,13 @@ the v2395 prebuilt `libZPSAPL`/`libZCL` binaries). Concretely:
 3. Resolve Blocker A symbol deltas with validated mappings.
 4. Add protocol extensions and safety fixes as reviewable commits.
 
-## Diagnostic ABI — proto 1.2 / build rev 17
+## Diagnostic ABI — proto 1.2 / build rev 18
 
-- Protocol **1.2**, build **rev 17**; capability response `0x8D0F`;
-  wrapper-default deterministic build id `0x010DC53D` and capability bitmap
+- Protocol **1.2**, build **rev 18**; capability response `0x8D0F`;
+  wrapper-default deterministic build id `0x010DC53E` and capability bitmap
   `0x00000000000CC60F`. The earlier rev9 build without typed OCB capability
   bit 15 used build ID `0x01014525` (rev8 was `0x01014524`, rev7
-  `0x0101452B`). Enabling experimental bit 16 produces `0x010CC53D`.
+  `0x0101452B`). Enabling experimental bit 16 produces `0x010CC53E`.
 - **Boot reset snapshot (rev12)** — capability bit 18 gates the additive empty
   `0x0D2B` request and six-byte `0x8D2B` response. It snapshots
   `u16AHI_PowerStatus()`, watchdog-reset, and brownout-reset at entry to
@@ -768,6 +790,12 @@ the v2395 prebuilt `libZPSAPL`/`libZCL` binaries). Concretely:
   return. This prevents `bDuplicateCheck()` from indexing its incoming frame
   counter array with a stale CRC value without changing key matching or replay
   comparison.
+- **TX-power PDM ID simplification (rev18)** — the current packed five-byte v2
+  record uses application PDM ID `0x0011` directly. The incompatible
+  rev9/rev10 test record was never distributed in a product variant, so no
+  replacement ID or migration is retained; affected test devices may be
+  factory-reset. Record validation, save readback, restore ordering and UART
+  behavior are unchanged.
 - **The rev8→rev9 revision change itself was descriptor-only.** No existing
   command encoding changed: the revision identified restoration of endpoint
   1's raw-`0x0530` output-cluster allowlist. The current unpublished candidate
@@ -847,15 +875,15 @@ the v2395 prebuilt `libZPSAPL`/`libZCL` binaries). Concretely:
     changed, hence the proto-minor + build-rev bump (host validator must move
     to 1.2 / rev 4).
   - The coordinator now stores a successfully round-tripped `0x0806` value in
-    the dedicated application record `PDM_ID_APP_TX_POWER` (`0x0012`). The
-    rev11 five-byte packed record carries `TX` magic, format version 2, the
+    the dedicated application record `PDM_ID_APP_TX_POWER` (`0x0011`). The
+    current five-byte packed record carries `TX` magic, format version 2, the
     native code, and a CRC-8 check byte. The rev9 source called its structure
     five bytes, but BA2 ABI tail alignment made `sizeof` eight; the three
-    padding bytes were not covered by the CRC. Rev10's compile-time size check
-    prevented that format drift, but HIL showed that PDM would not replace the
-    old eight-byte record with a five-byte record at the same ID. Rev11 moves
-    v2 to `0x0012`; `0x0011` is ignored and permanently reserved rather than
-    deleted or migrated. The next successful SET creates `0x0012`.
+    padding bytes were not covered by the CRC. That rev9/rev10 record was
+    experimental and never distributed in a product variant. Rev18 therefore
+    uses `0x0011` directly for the current packed v2 record, with no reserved
+    replacement ID or migration path. Test devices carrying the experimental
+    record may be factory-reset.
     `ZPS_eAplAfInit()` is not the restore anchor: a later
     stack start can issue an MLME reset and restore PIB defaults. For a restored
     coordinator the order is `BDB_vStart()` →

@@ -40,14 +40,9 @@ BA2_BIN=${TOOLCHAIN_ROOT:-$HOME/toolchains}/${TOOLCHAIN_PATH:-ba-elf-ba2}/bin
 # application main loop after BDB work, rather than inside a stack/BDB
 # callback or at AF init. Restored-network boot also schedules the first
 # application before serial RX can observe the default PIB value.
-grep -Eq '^#define[[:space:]]+PDM_ID_APP_TX_POWER_V1_RESERVED[[:space:]]+0x11$' "$PDM_IDS"
-grep -Eq '^#define[[:space:]]+PDM_ID_APP_TX_POWER[[:space:]]+0x12$' "$PDM_IDS"
-if [ "$(grep -Ec '^#define[[:space:]]+PDM_ID_APP_[A-Z0-9_]+[[:space:]]+0x12$' "$PDM_IDS")" -ne 1 ]; then
-    echo "PDM application record 0x12 is not unique" >&2
-    exit 1
-fi
-if grep -q 'PDM_ID_APP_TX_POWER_V1_RESERVED' "$AHI"; then
-    echo "legacy TX-power record 0x11 must remain abandoned" >&2
+grep -Eq '^#define[[:space:]]+PDM_ID_APP_TX_POWER[[:space:]]+0x11$' "$PDM_IDS"
+if [ "$(grep -Ec '^#define[[:space:]]+PDM_ID_APP_[A-Z0-9_]+[[:space:]]+0x11$' "$PDM_IDS")" -ne 1 ]; then
+    echo "PDM application record 0x11 is not unique" >&2
     exit 1
 fi
 grep -Eq '^#define[[:space:]]+APP_TX_POWER_RECORD_VERSION[[:space:]]+\(2U\)$' "$AHI"
@@ -218,7 +213,7 @@ grep -q 'OCB_TYPED_SUPPORT=1' "$README"
 grep -q 'OCB_KEY_EXPORT_RESTORE_EXPERIMENTAL=0' "$README"
 grep -q 'INSECURE_DEV_RAW_PDM=0' "$README"
 grep -qi '0x00000000000cc60f' "$OCB_DOC"
-grep -qi 'DIAG_FW_BUILD_ID=0x010dc53d' "$OCB_DOC"
+grep -qi 'DIAG_FW_BUILD_ID=0x010dc53e' "$OCB_DOC"
 grep -q 'Reserved diagnostic bit 17' "$OCB_DOC"
 grep -q 'status `5 RESTORE_UNSUPPORTED`' "$OCB_DOC"
 for opcode in 18 19 1A 1B 1C 20 21 22 23 24 25 26 27 28 29 2A
@@ -280,7 +275,7 @@ fi
 
 grep -Eq '#define[[:space:]]+DIAG_PROTO_MAJOR[[:space:]]+\(1U\)' "$HEADER"
 grep -Eq '#define[[:space:]]+DIAG_PROTO_MINOR[[:space:]]+\(2U\)' "$HEADER"
-grep -Eq '#define[[:space:]]+DIAG_BUILD_REVISION[[:space:]]+\(17U\)' "$HEADER"
+grep -Eq '#define[[:space:]]+DIAG_BUILD_REVISION[[:space:]]+\(18U\)' "$HEADER"
 grep -Eq '#define[[:space:]]+DIAG_CAP_BIT_GP_COMMISSIONING[[:space:]]+\(\(\(uint64\)1U\)[[:space:]]*<<[[:space:]]*3\)' "$HEADER"
 grep -Eq '#define[[:space:]]+DIAG_CAP_BIT_RESET_DIAGNOSTICS[[:space:]]+\(\(\(uint64\)1U\)[[:space:]]*<<[[:space:]]*18\)' "$HEADER"
 grep -Eq '#define[[:space:]]+DIAG_CAP_BIT_RESET_CONTEXT[[:space:]]+\(\(\(uint64\)1U\)[[:space:]]*<<[[:space:]]*19\)' "$HEADER"

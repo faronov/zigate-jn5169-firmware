@@ -169,11 +169,9 @@
  *           Successful PDM saves are also read back and fully validated before
  *           SET reports success. No UART command encoding or capability bit
  *           changes.
- *   rev 11: move the packed five-byte TX-power v2 record from PDM ID 0x0011
- *           to 0x0012. Physical HIL showed that EEPROM PDM would not replace
- *           rev9's existing ABI-padded eight-byte v1 record at the same ID;
- *           SET therefore failed closed. ID 0x0011 is permanently reserved
- *           and ignored. No UART command encoding or capability bit changes.
+ *   rev 11: test-only workaround for an ABI-padded rev9 TX-power record.
+ *           That experimental record was never distributed in a product
+ *           variant and the workaround is superseded by rev18.
  *   rev 12: bypass the stock typed ZDP unpacker for raw-mode endpoint-0
  *           traffic except valid Device_annce, make SerialLink TX payloads
  *           immutable, reject malformed 0x0530 requests before APDU
@@ -199,12 +197,18 @@
  *           consumes the stale CRC stack slot as an incoming-frame-counter
  *           array index and raises a bus error. Key matching and replay
  *           decisions are unchanged; no wire layout or capability changes.
+ *   rev 18: store the current packed five-byte TX-power v2 record directly at
+ *           PDM ID 0x0011. The incompatible rev9/rev10 test record was never
+ *           distributed in a product variant, so no migration or reserved
+ *           replacement ID is required. Test devices may be factory-reset.
+ *           Validation, save readback, wire layout and capabilities are
+ *           unchanged.
  *
- *   The additive OCB metadata-export subset remains protocol 1.2 / rev17 for
+ *   The additive OCB metadata-export subset remains protocol 1.2 / rev18 for
  *   stock compatibility. Its separately negotiated capability bit changes
  *   DIAG_FW_BUILD_ID, so hosts can distinguish this image without changing
  *   any previously shipped command layout. */
-#define DIAG_BUILD_REVISION             (17U)
+#define DIAG_BUILD_REVISION             (18U)
 
 /* Per-request structure version accepted by every request handler. */
 #define DIAG_REQ_VERSION                (1U)

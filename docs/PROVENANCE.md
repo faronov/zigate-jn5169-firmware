@@ -53,7 +53,7 @@ histories. Superseded patch snapshots were intentionally removed because they
 contained the retired TCLK instrumentation and obsolete protocol semantics.
 Use `git log upstream/v2395..HEAD` to audit every local change.
 
-The uncommitted rev17 work is local engineering on that pinned source: it
+The rev18 work is local engineering on that pinned source: it
 preserves the uncommitted rev11 TX-power/PDM changes, applies bounded parser
 and SerialLink fixes based on rev10 physical reset observations, and adds the
 read-only reset snapshot documented in `docs/RESET_DIAGNOSTIC_ABI.md`. Rev13
@@ -62,7 +62,9 @@ RAM-only software-reset reason retention after rev13 HIL exposed an unrelated
 reset storm. Rev15 adds retained fault registers after rev14 HIL identified
 the reset path as a bus error; rev16 independently negotiates that context.
 Rev17 guards the undefined APS key-index output identified from the rev16
-fault address without modifying either prebuilt SDK archive. No Go host
+fault address without modifying either prebuilt SDK archive. Rev18 uses PDM
+ID `0x0011` directly for the current packed TX-power v2 record because the
+incompatible rev9/rev10 test record was never distributed. No Go host
 source, parent-repository file, SDK binary, credential path, or hardware flash
 operation is part of this source revision.
 

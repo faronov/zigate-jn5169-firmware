@@ -2,7 +2,7 @@
 
 Status: the default `OCB_TYPED_SUPPORT=1` implementation is an **export-only
 metadata subset; not BackupCapable**. OCB ABI version 1, schema version 1. It
-is additive to ZiGate diagnostic protocol 1.2 / build revision 17 and does not
+is additive to ZiGate diagnostic protocol 1.2 / build revision 18 and does not
 change stock command layouts.
 
 All multi-byte integers are unsigned **big-endian**, matching the existing
@@ -31,8 +31,8 @@ button input. The separately compiled experimental ABI deliberately treats
 direct local UART possession as trust, but its public nonce relation is not
 physical presence or authentication. The default build's residual local-serial
 threat is disclosure of network identifiers and live counters, not key
-material. The clean rev17 default build leaves a 196-byte linker RAM margin;
-it has not been hardware-qualified.
+material. Rev18 changes no OCB behavior and has not been hardware-qualified.
+The clean rev17 artifact had a 196-byte linker RAM margin.
 
 ## Compile-time gates and diagnostic capability bits
 
@@ -52,9 +52,9 @@ with either OCB mode. Reserved diagnostic bit 17 is the production-qualified
 BackupCapable bit and is always clear.
 
 With the wrapper defaults (`GP_SUPPORT=1`), the complete diagnostic capability
-bitmap is `0x00000000000CC60F` and `DIAG_FW_BUILD_ID=0x010DC53D`.
+bitmap is `0x00000000000CC60F` and `DIAG_FW_BUILD_ID=0x010DC53E`.
 Experimental export changes these to `0x00000000000DC60F` and
-`0x010CC53D`. Bit 18 independently advertises reset summary `0x0D2B`; bit 19
+`0x010CC53E`. Bit 18 independently advertises reset summary `0x0D2B`; bit 19
 independently advertises reset context `0x0D2C`. These are
 negotiation identifiers, not qualification claims.
 

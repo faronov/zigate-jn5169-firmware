@@ -7,7 +7,8 @@ byte without changing the response length. Revision 15 adds a separate
 fixed-length exception-context response; the original `0x8D2B` remains exactly
 six bytes. Revision 16 gives that command an independent capability bit without
 changing either response layout. Revision 17 changes only APS key-index
-handling and leaves both diagnostic commands unchanged.
+handling. Revision 18 changes only the TX-power PDM record ID; both revisions
+leave these diagnostic commands unchanged.
 
 ## Negotiation
 
@@ -16,7 +17,7 @@ handling and leaves both diagnostic commands unchanged.
 - Summary capability bit: `1 << 18` (`0x0000000000040000`)
 - Context capability bit: `1 << 19` (`0x0000000000080000`)
 - Wrapper-default capability bitmap: `0x00000000000CC60F`
-- Wrapper-default build ID: `0x010DC53D`
+- Wrapper-default build ID: `0x010DC53E`
 
 Hosts must negotiate `0x0D0F` and require bit 18 before sending `0x0D2B`.
 They must independently require bit 19 before sending `0x0D2C`. Revisions

@@ -16,12 +16,11 @@ and link-key export with a 30-second nonce confirmation that is explicitly
 **not authentication**. Restore remains blocked and BackupCapable remains
 clear because v2395 does not expose flash-TCLK counters or atomic rollback.
 
-> Status: **rev17 is hardware-qualified for the RODRET reset defect and the
-> previously validated network/TX-power paths, not for every optional
-> capability.** It preserved the existing network and TX power `7`; two awake
-> IKEA RODRET interviews completed Node Descriptor, Active Endpoints, Simple
-> Descriptor and Basic reads without a reset. Typed OCB restore remains
-> unimplemented and experimental key export remains unqualified. See
+> Status: **rev18 is a source/build candidate and has not been hardware-
+> qualified.** It changes the current TX-power PDM record ID only; rev17
+> remains the exact hardware-qualified artifact for the RODRET reset defect
+> and its network/TX-power paths. Typed OCB restore remains unimplemented and
+> experimental key export remains unqualified. See
 > [`docs/MIGRATION_STATUS.md`](docs/MIGRATION_STATUS.md).
 
 ## Layout
@@ -41,7 +40,7 @@ clear because v2395 does not expose flash-TCLK counters or atomic rollback.
 See [`docs/PROVENANCE.md`](docs/PROVENANCE.md) for exact upstream commits,
 hashes, and licensing boundaries.
 
-The custom diagnostic ABI is protocol **1.2**, build **rev 16**. Host-visible
+The custom diagnostic ABI is protocol **1.2**, build **rev 18**. Host-visible
 custom commands are capability-negotiated through `0x0D0F`/`0x8D0F`; see
 [`docs/DIAGNOSTIC_ABI_MANUFACTURER_CODE.md`](docs/DIAGNOSTIC_ABI_MANUFACTURER_CODE.md)
 and
@@ -89,8 +88,8 @@ compiled, experimental key export bit 16 when compiled, and boot reset
 summary diagnostics bit 18 and reset-context bit 19. Reserved
 BackupCapable bit 17 is always clear. The wrapper's default GP + typed-OCB
 build advertises `0x00000000000CC60F` and computes
-`DIAG_FW_BUILD_ID=0x010DC53D`. Enabling experimental export adds bit 16,
-yielding `0x00000000000DC60F` and build ID `0x010CC53D`. Bit 18 guarantees
+`DIAG_FW_BUILD_ID=0x010DC53E`. Enabling experimental export adds bit 16,
+yielding `0x00000000000DC60F` and build ID `0x010CC53E`. Bit 18 guarantees
 only `0x0D2B`; bit 19 independently guarantees `0x0D2C`. These IDs identify
 source constants, not hardware qualification.
 
@@ -139,12 +138,12 @@ not reread or write PDM. A new or changed record is read back and fully
 validated before SET reports success. GET (`0x0807`) and both response
 encodings are otherwise unchanged.
 The record is explicitly packed and fixed at five bytes (`TX`, format version
-2, code, CRC-8). Rev9's nominal five-byte C structure was actually eight bytes
-under the BA2 ABI because of tail padding. Rev10 attempted to replace that
-different-sized record at the same PDM ID, but physical HIL showed the EEPROM
-PDM rejected the SET. Rev11 therefore stores v2 at `0x0012`; legacy ID `0x0011`
-is ignored and permanently reserved. An upgraded device uses the default TX
-power until the host performs one successful SET to create the v2 record.
+2, code, CRC-8) and is stored directly at application PDM ID `0x0011`.
+Rev9/rev10 firmware using an incompatible ABI-padded record at that ID was
+experimental and was never distributed in a product variant, so the current
+firmware does not reserve another ID or implement migration. Test devices
+carrying the experimental record must be factory-reset. Product variants need
+no backward-compatibility path.
 The accepted values remain exactly `0x00..0x0A` and `0x20..0x3F`. They are
 native signed six-bit MiniMac codes (`0x20..0x3F` represent −32..−1), **not
 calibrated dBm measurements**. Invalid, clamped, non-round-trippable, corrupt,
@@ -230,7 +229,7 @@ before adapter restart, but GET returned the default code 8 afterward. The
 rev9 documentation therefore overclaimed persistence, and that hash must not
 be cited as qualification for it.
 
-The current rev10 replacement clean-build result is
+The historical rev10 replacement clean-build result is
 `text=255696 data=2104 bss=30421`, with the same 244-byte linker margin:
 
 ```
@@ -240,11 +239,11 @@ ELF sha256 e1f67c5e721f2f190e833af15f1d3ab69c07d427a4fb8923a8dccdd5589f930e
 
 Two clean local builds produced those rev10 hashes. Physical HIL on a device
 carrying rev9's old `0x0011` record showed that SET failed closed with status 1,
-so this artifact is also not a valid persistence release. Rev11 abandons that
-record ID and remains unapproved until its exact BIN is flashed and the same
-SET/restart test passes.
+so this artifact is also not a valid persistence release. These rev9/rev10
+images and their incompatible record were test-only and were never distributed
+in a product variant.
 
-The current rev11 clean-build result is:
+The historical rev11 clean-build result is:
 
 ```
 text=255696 data=2104 bss=30421; linker RAM margin=244 bytes
@@ -255,7 +254,7 @@ ELF sha256 19d8192a4e98c35a0189cf8381b3c849d0bbd7a290202658b082090ce19b1bb6
 Two clean local builds produced those rev11 hashes. This is build evidence,
 not persistence HIL qualification.
 
-Rev12 preserves the rev11 PDM `0x0012` record fix and adds the bounded
+Rev12 preserves the packed v2 TX-power validation/readback logic and adds the bounded
 raw-ZDP, immutable SerialLink TX, strict raw-APS parser, and reset-diagnostic
 changes described above. Two clean pinned-BA2 builds produced:
 
@@ -359,6 +358,23 @@ Two awake RODRET interviews received Node Descriptor `0x8002`, Active
 Endpoints `0x8005`, Simple Descriptor `0x8004`, completed Basic reads, and
 finished with one endpoint. No new `0x8006` restart indication appeared, and
 the retained reset context stayed at the expected host-reset reason `0x10`.
+
+Rev18 changes the current packed TX-power v2 record ID to `0x0011` and removes
+the test-only reserved/replacement-ID workaround. Because the incompatible
+rev9/rev10 record was never distributed in a product variant, no migration is
+implemented; affected test devices may be factory-reset. The UART protocol,
+capability bitmap, packed record validation, save readback, and TX restore
+ordering are unchanged. One clean pinned-toolchain build produced:
+
+```
+text=256808 data=2104 bss=30469; linker RAM margin=196 bytes
+BIN size 258920 bytes
+BIN sha256 421893c636aded7204889e6b8bd85206312b1de0b0ed7b5507dbbd2d18d77d36
+ELF sha256 6b9898ca40d5709623eafb92f015d0d5ffd8aaacf571989b7d059cbaeb35cad7
+DIAG_FW_BUILD_ID=0x010DC53E
+```
+
+This is build evidence only; rev18 has not been hardware-qualified.
 
 ## Provenance & licensing
 
